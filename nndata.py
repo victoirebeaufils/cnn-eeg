@@ -11,17 +11,22 @@ def load_raw_data(electrodes, subject=None, num_classes=2, long_edge=False):
     labels = []
     
     if subject == None:
-        subject_ids = range(1,110)
+        subject_ids = range(1,110) # returns sequence of numbers starting from first arg til last arg - 1
     else:
         try:
-            subject_ids = [int(subject)]
+            subject_ids = [int(subject)] # try to store multiple subjects
         except:
-            subject_ids = subject
+            subject_ids = subject # there's only one subject
     
     for subject_id in subject_ids:
         try:
+        # load_physionet_data returns (X, y, pos, fs)
+        # X: Trials with shape (N_subjects, N_trials, N_samples, N_channels)
+        # y: labels with shape (N_subjects, N_trials, N_classes)
+        # pos: 2D projected electrode positions
+        # fs: sample rate
             t, l, loc, fs = util.load_physionet_data(subject_id, num_classes, long_edge=long_edge)
-            if num_classes == 2 and t.shape[0] != 42:
+            if num_classes == 2 and t.shape[0] != 42: # if only classifying left/right and 
                 # drop subjects with less trials
                 continue
             trials.append(t[:,:, electrodes])

@@ -4,14 +4,14 @@ import pyedflib
 
 def load_edf_signals(path):
     try:
-        sig = pyedflib.EdfReader(path)
+        sig = pyedflib.EdfReader(path) 
         n = sig.signals_in_file
-        signal_labels = sig.getSignalLabels()
+        signal_labels = sig.getSignalLabels() #left, right
         sigbuf = np.zeros((n, sig.getNSamples()[0]))
-        for j in np.arange(n):
+        for j in np.arange(n): #values generated from O til n-1
             sigbuf[j, :] = sig.readSignal(j)
         # (n,3) annotations: [t in s, duration, type T0/T1/T2]
-        annotations = sig.read_annotation()
+        annotations = sig.read_annotation() #what are the differences between signal labels and annotations? The world may never know
     except KeyboardInterrupt:
         # prevent memory leak and access problems of unclosed buffers
         sig._close()
@@ -33,8 +33,8 @@ def load_physionet_data(subject_id, num_classes=2, long_edge=False):
         pos: 2D projected electrode positions
         fs: sample rate
     """
-    SAMPLE_RATE = 160
-    EEG_CHANNELS = 64
+    SAMPLE_RATE = 160 #<- TODO: change
+    EEG_CHANNELS = 64 #<- TODO: change
     
     BASELINE_RUN = 1
     MI_RUNS = [4, 8, 12] # l/r fist
@@ -48,22 +48,25 @@ def load_physionet_data(subject_id, num_classes=2, long_edge=False):
     NUM_TRIALS = 21 * num_classes 
     
     n_runs = len(MI_RUNS)
-    X = np.zeros((n_runs, RUN_LENGTH, EEG_CHANNELS))
+    X = np.zeros((n_runs, RUN_LENGTH, EEG_CHANNELS)) #3d array of n_runs x run_length x eeg_channels //// what's weird is it doesn't use trial length, just run_length. 
+                                                    #could be 3 or 6 x
     events = []
 
-    base_path = '/home/hauke/Workspace/cnn-eeg/eegmmidb/S%03dR%02d.edf'
+    base_path = '/home/hauke/Workspace/cnn-eeg/eegmmidb/S%03dR%02d.edf' # TODO: change
     
     for i_run, current_run in enumerate(MI_RUNS):
         # load from file
-        path = base_path % (subject_id, current_run)
-        signals, annotations = load_edf_signals(path)    
-        X[i_run,:signals.shape[0],:] = signals
-        
+        path = base_path % (subject_id, current_run) #nani desu ka
+        signals, annotations = load_edf_signals(path)    # annotations: left/right movements, signals: eeg voltage
+        X[i_run,:signals.shape[0],:] = signals 
+        #not sure what the signals shape is like
+        # :signals.shape[0] => Beginning til the element before signal.shape[0]
+        # : all values
         # read annotations
         current_event = [i_run, 0, 0, 0] # run, class (l/r), start, end
-        
+    
         for annotation in annotations:
-            t = int(annotation[0] * SAMPLE_RATE * 1e-7)
+            t = int(annotation[0] * SAMPLE_RATE * 1e-7) # t for trial?
             action = int(annotation[2][1])
             
             if action == 0 and current_event[1] != 0:
